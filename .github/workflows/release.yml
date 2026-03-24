@@ -1,0 +1,129 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build-and-release:
+    runs-on: macos-15
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get version
+        id: version
+        run: |
+          VERSION=$(grep -m1 'version:' Sources/ComputerUseCLI/ComputerUseCommand.swift | grep -oE '"[0-9]+\.[0-9]+\.[0-9]+"' | tr -d '"')
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Version: $VERSION"
+
+      - name: Build universal binary
+        run: |
+          swift build -c release --arch arm64 --arch x86_64
+          swift build -c release --arch arm64 --arch x86_64 --product teach-overlay
+          lipo -info .build/apple/Products/Release/computer-use
+
+      - name: Run tests
+        run: swift test
+
+      - name: Create TeachOverlay.app bundle
+        run: |
+          RELEASE=.build/apple/Products/Release
+          mkdir -p $RELEASE/TeachOverlay.app/Contents/MacOS
+          cp $RELEASE/teach-overlay $RELEASE/TeachOverlay.app/Contents/MacOS/
+          cat > $RELEASE/TeachOverlay.app/Contents/Info.plist << EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>CFBundleExecutable</key><string>teach-overlay</string>
+            <key>CFBundleIdentifier</key><string>com.computer-use.teach-overlay</string>
+            <key>CFBundleName</key><string>TeachOverlay</string>
+            <key>CFBundleVersion</key><string>${{ steps.version.outputs.version }}</string>
+            <key>LSUIElement</key><true/>
+            <key>NSHighResolutionCapable</key><true/>
+            <key>LSMinimumSystemVersion</key><string>14.0</string>
+          </dict>
+          </plist>
+          EOF
+
+      - name: Package
+        run: |
+          VERSION=${{ steps.version.outputs.version }}
+          DIST=.build/dist/computer-use-${VERSION}
+          mkdir -p $DIST
+          cp .build/apple/Products/Release/computer-use $DIST/
+          cp -r .build/apple/Products/Release/TeachOverlay.app $DIST/
+          cd .build/dist
+          tar czf computer-use-${VERSION}.tar.gz computer-use-${VERSION}/
+          shasum -a 256 computer-use-${VERSION}.tar.gz
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION=${{ steps.version.outputs.version }}
+          TARBALL=.build/dist/computer-use-${VERSION}.tar.gz
+
+          # Delete existing release if it exists
+          gh release delete "v${VERSION}" --yes 2>/dev/null || true
+          git tag -d "v${VERSION}" 2>/dev/null || true
+          git push origin ":refs/tags/v${VERSION}" 2>/dev/null || true
+
+          # Create release
+          gh release create "v${VERSION}" \
+            --title "v${VERSION}" \
+            --notes "Universal binary (arm64 + x86_64) for macOS 14+" \
+            "$TARBALL"
+
+      - name: Update Homebrew formula
+        env:
+          GH_TOKEN: ${{ secrets.TAP_TOKEN }}
+        run: |
+          VERSION=${{ steps.version.outputs.version }}
+          SHA=$(shasum -a 256 .build/dist/computer-use-${VERSION}.tar.gz | cut -d' ' -f1)
+          RELEASE_URL="https://github.com/dnakov/computer-use/releases/download/v${VERSION}/computer-use-${VERSION}.tar.gz"
+
+          # Clone tap, update formula, push
+          git clone https://x-access-token:${GH_TOKEN}@github.com/dnakov/homebrew-computer-use.git /tmp/tap
+          cd /tmp/tap
+
+          cat > Formula/computer-use.rb << FORMULA
+          class ComputerUse < Formula
+            desc "macOS desktop control CLI — screenshots, input simulation, app management"
+            homepage "https://github.com/dnakov/computer-use"
+            url "${RELEASE_URL}"
+            sha256 "${SHA}"
+            version "${VERSION}"
+            license "MIT"
+
+            def install
+              bin.install "computer-use"
+              app_dir = libexec/"TeachOverlay.app"
+              app_dir.mkpath
+              cp_r "TeachOverlay.app/.", app_dir
+              ln_sf libexec/"TeachOverlay.app", bin/"TeachOverlay.app"
+            end
+
+            def caveats
+              <<~EOS
+                computer-use requires macOS permissions:
+                  - Accessibility (for input simulation)
+                  - Screen Recording (for screenshots)
+                Grant in System Settings > Privacy & Security.
+              EOS
+            end
+
+            test do
+              assert_match "displayId", shell_output("#{bin}/computer-use display list-all")
+              assert_match version.to_s, shell_output("#{bin}/computer-use --version")
+            end
+          end
+          FORMULA
+
+          git add -A
+          git commit -m "Update to v${VERSION}"
+          git push
