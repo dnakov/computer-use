@@ -99,7 +99,8 @@ struct InputGroup: AsyncParsableCommand {
 
         func run() async throws {
             do {
-                let result = try await MouseInput.moveMouse(x: x, y: y, isRelative: relative, animate: !noAnimate)
+                let (finalX, finalY) = convertIfNeeded(x: x, y: y, isRelative: relative)
+                let result = try await MouseInput.moveMouse(x: finalX, y: finalY, isRelative: relative, animate: !noAnimate)
                 try OutputFormatter.output(["result": result])
             } catch {
                 OutputFormatter.exitWithError(error.localizedDescription)
@@ -193,14 +194,16 @@ struct InputGroup: AsyncParsableCommand {
                 let sx: Int32
                 let sy: Int32
                 if let startX = startX, let startY = startY {
-                    sx = startX
-                    sy = startY
+                    let (cx, cy) = convertIfNeeded(x: startX, y: startY, isRelative: false)
+                    sx = cx
+                    sy = cy
                 } else {
                     let location = try await MouseInput.mouseLocation()
                     sx = Int32(location.x)
                     sy = Int32(location.y)
                 }
-                let result = try await MouseInput.drag(startX: sx, startY: sy, endX: endX, endY: endY)
+                let (ex, ey) = convertIfNeeded(x: endX, y: endY, isRelative: false)
+                let result = try await MouseInput.drag(startX: sx, startY: sy, endX: ex, endY: ey)
                 try OutputFormatter.output(["result": result])
             } catch {
                 OutputFormatter.exitWithError(error.localizedDescription)
@@ -247,4 +250,22 @@ struct InputGroup: AsyncParsableCommand {
             try OutputFormatter.output(["isSystemCombo": result])
         }
     }
+}
+
+/// Convert screenshot pixel coordinates to screen points using the last screenshot dims.
+/// Falls back to raw coordinates if no screenshot dims are available or if relative.
+private func convertIfNeeded(x: Int32, y: Int32, isRelative: Bool) -> (Int32, Int32) {
+    guard !isRelative, let dims = LastScreenshot.load() else {
+        return (x, y)
+    }
+    let point = CoordinateConverter.imagePixelsToScreen(
+        pixelX: Double(x), pixelY: Double(y),
+        screenshotWidth: dims.width,
+        screenshotHeight: dims.height,
+        displayWidth: dims.displayWidth,
+        displayHeight: dims.displayHeight,
+        originX: dims.originX,
+        originY: dims.originY
+    )
+    return (Int32(point.x), Int32(point.y))
 }

@@ -179,12 +179,7 @@ public enum FrontmostCheck {
 
         switch tier {
         case .read:
-            let isBrowser = AppClassification.classify(bundleId: bundleId, displayName: displayName) == .browser
-            if isBrowser {
-                return "\"\(displayName)\" is granted at tier \"read\" — visible in screenshots only, no clicks or typing. Use the Browser Extension MCP for browser interaction (tools named `mcp__Browser_Extension__*`; load via ToolSearch if deferred). Do not attempt to work around this restriction — never use AppleScript, System Events, shell commands, or any other method to send clicks or keystrokes to this app."
-            } else {
-                return "\"\(displayName)\" is granted at tier \"read\" — visible in screenshots only, no clicks or typing. No interaction is permitted; ask the user to take any actions in this app themselves. Do not attempt to work around this restriction — never use AppleScript, System Events, shell commands, or any other method to send clicks or keystrokes to this app."
-            }
+            return "\"\(displayName)\" is granted at tier \"read\" — visible in screenshots only, no clicks or typing. No interaction is permitted; ask the user to take any actions in this app themselves. Do not attempt to work around this restriction — never use AppleScript, System Events, shell commands, or any other method to send clicks or keystrokes to this app."
         case .click:
             if category == .keyboard {
                 return "\"\(displayName)\" is granted at tier \"click\" — typing, key presses, and paste require tier \"full\". The keys would go to this app's text fields or integrated terminal. To type into a different app, click it first to bring it forward. For shell commands, use the Bash tool. Do not attempt to work around this restriction — never use AppleScript, System Events, shell commands, or any other method to send clicks or keystrokes to this app."
@@ -205,12 +200,7 @@ public enum FrontmostCheck {
     ) -> String {
         switch tier {
         case .read:
-            let isBrowser = AppClassification.classify(bundleId: bundleId, displayName: displayName) == .browser
-            if isBrowser {
-                return "Click at these coordinates would land on \"\(displayName)\", which is granted at tier \"read\" (screenshots only, no interaction). Use the Browser Extension MCP for browser interaction. Do not attempt to work around this restriction — never use AppleScript, System Events, shell commands, or any other method to send clicks or keystrokes to this app."
-            } else {
-                return "Click at these coordinates would land on \"\(displayName)\", which is granted at tier \"read\" (screenshots only, no interaction). Ask the user to take any actions in this app themselves. Do not attempt to work around this restriction — never use AppleScript, System Events, shell commands, or any other method to send clicks or keystrokes to this app."
-            }
+            return "Click at these coordinates would land on \"\(displayName)\", which is granted at tier \"read\" (screenshots only, no interaction). Ask the user to take any actions in this app themselves. Do not attempt to work around this restriction — never use AppleScript, System Events, shell commands, or any other method to send clicks or keystrokes to this app."
         case .click:
             return "Click at these coordinates would land on \"\(displayName)\", which is granted at tier \"click\" — right-click, middle-click, and clicks with modifier keys require tier \"full\" (they can Paste via the context menu or fire modifier-chord keystrokes). Plain left_click is allowed here. Do not attempt to work around this restriction — never use AppleScript, System Events, shell commands, or any other method to send clicks or keystrokes to this app."
         case .full:

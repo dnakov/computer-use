@@ -127,7 +127,9 @@ public enum AppClassification {
 
     public static func tier(bundleId: String?, displayName: String?) -> AppTier {
         switch classify(bundleId: bundleId, displayName: displayName) {
-        case .browser, .trading:
+        case .browser:
+            return .full
+        case .trading:
             return .read
         case .terminal:
             return .click

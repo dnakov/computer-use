@@ -95,10 +95,10 @@ final class GrantManagerTests: XCTestCase {
 
     // MARK: - Tier assignment
 
-    func testSafariAssignedReadTier() {
+    func testSafariAssignedFullTier() {
         let request = GrantManager.GrantRequest(apps: ["Safari"], reason: "test")
         let result = GrantManager.resolve(request: request, installedApps: installedApps)
-        XCTAssertEqual(result.granted.first?.tier, .read)
+        XCTAssertEqual(result.granted.first?.tier, .full)
     }
 
     func testTerminalAssignedClickTier() {
@@ -127,7 +127,7 @@ final class GrantManagerTests: XCTestCase {
         ]
         let newResult = GrantManager.GrantResult(
             granted: [
-                GrantedApp(bundleId: "com.apple.Safari", displayName: "Safari", grantedAt: Date(), tier: .read),
+                GrantedApp(bundleId: "com.apple.Safari", displayName: "Safari", grantedAt: Date(), tier: .full),
             ],
             denied: [],
             policyDenied: [],
@@ -220,15 +220,12 @@ final class GrantManagerTests: XCTestCase {
 
     // MARK: - Tier guidance messages
 
-    func testTierGuidanceForReadBrowser() {
+    func testTierGuidanceNilForBrowser() {
         let apps = [
-            GrantedApp(bundleId: "com.apple.Safari", displayName: "Safari", grantedAt: Date(), tier: .read),
+            GrantedApp(bundleId: "com.apple.Safari", displayName: "Safari", grantedAt: Date(), tier: .full),
         ]
         let guidance = GrantManager.tierGuidance(for: apps)
-        XCTAssertNotNil(guidance)
-        XCTAssertTrue(guidance!.contains("Safari"))
-        XCTAssertTrue(guidance!.contains("tier \"read\""))
-        XCTAssertTrue(guidance!.contains("Browser Extension MCP"))
+        XCTAssertNil(guidance, "Browsers at full tier should not produce guidance")
     }
 
     func testTierGuidanceForReadNonBrowser() {
@@ -267,14 +264,14 @@ final class GrantManagerTests: XCTestCase {
 
     func testMultipleAppsGuidance() {
         let apps = [
-            GrantedApp(bundleId: "com.apple.Safari", displayName: "Safari", grantedAt: Date(), tier: .read),
+            GrantedApp(bundleId: "com.apple.Safari", displayName: "Safari", grantedAt: Date(), tier: .full),
             GrantedApp(bundleId: "com.apple.Terminal", displayName: "Terminal", grantedAt: Date(), tier: .click),
             GrantedApp(bundleId: "com.apple.Notes", displayName: "Notes", grantedAt: Date(), tier: .full),
         ]
         let guidance = GrantManager.tierGuidance(for: apps)
         XCTAssertNotNil(guidance)
-        XCTAssertTrue(guidance!.contains("Safari"))
         XCTAssertTrue(guidance!.contains("Terminal"))
+        XCTAssertFalse(guidance!.contains("Safari"), "Full tier should not appear in guidance")
         XCTAssertFalse(guidance!.contains("Notes"), "Full tier should not appear in guidance")
     }
 }

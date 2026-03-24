@@ -64,6 +64,17 @@ struct ScreenshotGroup: AsyncParsableCommand {
                     let originX: Int
                     let originY: Int
                 }
+                let dims = ScreenshotDims(
+                    width: result.width,
+                    height: result.height,
+                    displayWidth: displayInfo.boundsWidth,
+                    displayHeight: displayInfo.boundsHeight,
+                    displayId: Int(displayInfo.displayID),
+                    originX: displayInfo.originX,
+                    originY: displayInfo.originY
+                )
+                LastScreenshot.save(dims)
+
                 try OutputFormatter.output(ScreenshotOutput(
                     path: filePath.path,
                     width: result.width,

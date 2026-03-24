@@ -1,7 +1,7 @@
 class ComputerUseSwift < Formula
   desc "macOS computer use capabilities CLI — screenshots, input simulation, app management"
   homepage "https://github.com/dnakov/computer-use"
-  url "https://github.com/dnakov/computer-use/archive/refs/tags/v0.1.0.tar.gz"
+  url "https://github.com/dnakov/computer-use/archive/refs/tags/v0.2.0.tar.gz"
   sha256 "TODO_REPLACE_WITH_ACTUAL_SHA256"
   license "MIT"
 

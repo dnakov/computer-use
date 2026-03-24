@@ -79,9 +79,9 @@ final class AppClassificationTests: XCTestCase {
 
     // MARK: - tier()
 
-    func testBrowserTierIsRead() {
+    func testBrowserTierIsFull() {
         let tier = AppClassification.tier(bundleId: "com.apple.Safari", displayName: nil)
-        XCTAssertEqual(tier, .read)
+        XCTAssertEqual(tier, .full)
     }
 
     func testTradingTierIsRead() {

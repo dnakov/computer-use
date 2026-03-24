@@ -193,21 +193,10 @@ public enum GrantManager {
         let clickApps = apps.filter { $0.tier == .click }
 
         for app in readApps {
-            let category = AppClassification.classify(
-                bundleId: app.bundleId,
-                displayName: app.displayName
+            messages.append(
+                "\"\(app.displayName)\" is granted at tier \"read\" — visible in screenshots only. Ask the user to take any actions."
+                + workaroundSuffix
             )
-            if category == .browser {
-                messages.append(
-                    "\"\(app.displayName)\" is granted at tier \"read\" — visible in screenshots only, no clicks or typing. Use Browser Extension MCP."
-                    + workaroundSuffix
-                )
-            } else {
-                messages.append(
-                    "\"\(app.displayName)\" is granted at tier \"read\" — visible in screenshots only. Ask the user to take any actions."
-                    + workaroundSuffix
-                )
-            }
         }
 
         for app in clickApps {

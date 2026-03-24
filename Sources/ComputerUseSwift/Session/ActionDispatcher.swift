@@ -298,6 +298,7 @@ public enum ActionDispatcher {
                 originY: displayInfo.originY
             )
             session.lastScreenshot = dims
+            LastScreenshot.save(dims)
 
             // Write to file
             let screenshotDir = FileManager.default.temporaryDirectory.appendingPathComponent("computer-use-screenshots")
