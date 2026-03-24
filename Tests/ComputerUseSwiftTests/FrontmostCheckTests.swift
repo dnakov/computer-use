@@ -86,7 +86,7 @@ final class FrontmostCheckTests: XCTestCase {
             isHitTest: false
         )
         XCTAssertTrue(error.contains("tier \"read\""))
-        XCTAssertTrue(error.contains("Browser Extension MCP"))
+        XCTAssertTrue(error.contains("ask the user"))
     }
 
     func testReadTierNonBrowserError() {
@@ -147,7 +147,7 @@ final class FrontmostCheckTests: XCTestCase {
             isHitTest: true
         )
         XCTAssertTrue(error.contains("would land on"))
-        XCTAssertTrue(error.contains("Browser Extension MCP"))
+        XCTAssertTrue(error.contains("Ask the user"))
     }
 
     func testHitTestReadNonBrowserError() {
