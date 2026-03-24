@@ -245,12 +245,16 @@ private func launchOneStep(
     let selfPath = ProcessInfo.processInfo.arguments[0]
     let resolvedSelf = URL(fileURLWithPath: selfPath).resolvingSymlinksInPath()
     let candidates = [
+        // App bundle next to computer-use binary
         resolvedSelf.deletingLastPathComponent()
             .appendingPathComponent("TeachOverlay.app/Contents/MacOS/teach-overlay").path,
+        // Plain binary next to computer-use binary (debug builds, symlinked installs)
+        resolvedSelf.deletingLastPathComponent()
+            .appendingPathComponent("teach-overlay").path,
         // Fallback: check common build paths relative to source
         URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
-            .appendingPathComponent(".build/debug/TeachOverlay.app/Contents/MacOS/teach-overlay").path,
+            .appendingPathComponent(".build/debug/teach-overlay").path,
     ]
     guard let teachBinary = candidates.first(where: { FileManager.default.fileExists(atPath: $0) }) else {
         throw NSError(domain: "TeachOverlay", code: 1,
