@@ -254,6 +254,9 @@ private func launchOneStep(
         // Fallback: check common build paths relative to source
         URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+            .appendingPathComponent(".build/debug/TeachOverlay.app/Contents/MacOS/teach-overlay").path,
+        URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
             .appendingPathComponent(".build/debug/teach-overlay").path,
     ]
     guard let teachBinary = candidates.first(where: { FileManager.default.fileExists(atPath: $0) }) else {
