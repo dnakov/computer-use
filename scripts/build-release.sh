@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-VERSION="${1:-0.2.0}"
+VERSION="${1:-0.2.1}"
 if [ -f .env ]; then source .env; fi
 IDENTITY="${CODESIGN_IDENTITY:?Set CODESIGN_IDENTITY in .env}"
 BUNDLE_PREFIX="${BUNDLE_ID_PREFIX:-com.example}"
