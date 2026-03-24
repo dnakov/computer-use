@@ -1,0 +1,14 @@
+.build/
+.swiftpm/
+*.xcodeproj/
+*.xcworkspace/
+DerivedData/
+*.o
+*.dSYM
+*.tar.gz
+
+# Local config
+.env
+
+# Session state
+~/.computer-use/
