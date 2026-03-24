@@ -11,11 +11,13 @@ public enum ActionDispatcher {
         public let content: [ContentItem]
         public let isError: Bool?
         public let screenshot: ScreenshotDims?
+        public let screenshotPath: String?
 
-        public init(content: [ContentItem], isError: Bool? = nil, screenshot: ScreenshotDims? = nil) {
+        public init(content: [ContentItem], isError: Bool? = nil, screenshot: ScreenshotDims? = nil, screenshotPath: String? = nil) {
             self.content = content
             self.isError = isError
             self.screenshot = screenshot
+            self.screenshotPath = screenshotPath
         }
     }
 
@@ -281,7 +283,7 @@ public enum ActionDispatcher {
                 jpegQuality: 0.75
             )
 
-            // Extract base64 from data URL
+            // Save image to temp file instead of returning base64 inline
             let base64 = result.dataUrl.replacingOccurrences(
                 of: "data:image/jpeg;base64,", with: ""
             )
@@ -297,9 +299,20 @@ public enum ActionDispatcher {
             )
             session.lastScreenshot = dims
 
+            // Write to file
+            let screenshotDir = FileManager.default.temporaryDirectory.appendingPathComponent("computer-use-screenshots")
+            try? FileManager.default.createDirectory(at: screenshotDir, withIntermediateDirectories: true)
+            let filename = "screenshot-\(session.sessionId)-\(Int(Date().timeIntervalSince1970)).jpg"
+            let filePath = screenshotDir.appendingPathComponent(filename)
+
+            if let imageData = Data(base64Encoded: base64) {
+                try imageData.write(to: filePath)
+            }
+
             return ActionResult(
-                content: [.image(data: base64, mimeType: "image/jpeg")],
-                screenshot: dims
+                content: [.text("Screenshot saved to \(filePath.path)")],
+                screenshot: dims,
+                screenshotPath: filePath.path
             )
         } else {
             throw DispatchError.executorThrew("Screenshot requires macOS 14.0 or later")

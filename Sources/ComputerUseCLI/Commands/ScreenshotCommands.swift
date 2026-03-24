@@ -1,6 +1,7 @@
 import ArgumentParser
 import ComputerUseSwift
 import CoreGraphics
+import Foundation
 
 struct ScreenshotGroup: AsyncParsableCommand {
     static let configuration = CommandConfiguration(
@@ -43,8 +44,28 @@ struct ScreenshotGroup: AsyncParsableCommand {
                     jpegQuality: CGFloat(jpegQuality)
                 )
 
-                let screenshotResult = ScreenshotResult(
-                    base64: result.dataUrl,
+                // Save to temp file
+                let base64 = result.dataUrl.replacingOccurrences(of: "data:image/jpeg;base64,", with: "")
+                let screenshotDir = FileManager.default.temporaryDirectory.appendingPathComponent("computer-use-screenshots")
+                try? FileManager.default.createDirectory(at: screenshotDir, withIntermediateDirectories: true)
+                let filename = "screenshot-\(Int(Date().timeIntervalSince1970)).jpg"
+                let filePath = screenshotDir.appendingPathComponent(filename)
+                if let imageData = Data(base64Encoded: base64) {
+                    try imageData.write(to: filePath)
+                }
+
+                struct ScreenshotOutput: Codable {
+                    let path: String
+                    let width: Int
+                    let height: Int
+                    let displayWidth: Int
+                    let displayHeight: Int
+                    let displayId: Int
+                    let originX: Int
+                    let originY: Int
+                }
+                try OutputFormatter.output(ScreenshotOutput(
+                    path: filePath.path,
                     width: result.width,
                     height: result.height,
                     displayWidth: displayInfo.boundsWidth,
@@ -52,8 +73,7 @@ struct ScreenshotGroup: AsyncParsableCommand {
                     displayId: Int(displayInfo.displayID),
                     originX: displayInfo.originX,
                     originY: displayInfo.originY
-                )
-                try OutputFormatter.output(screenshotResult)
+                ))
             } catch {
                 OutputFormatter.exitWithError(error.localizedDescription)
             }
