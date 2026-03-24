@@ -31,8 +31,8 @@ struct ScreenshotGroup: AsyncParsableCommand {
                 }
 
                 let (targetW, targetH) = ImageSizing.cuTargetImageSize(
-                    physW: displayInfo.boundsWidth,
-                    physH: displayInfo.boundsHeight
+                    physW: displayInfo.physicalWidth,
+                    physH: displayInfo.physicalHeight
                 )
 
                 let result = try await ScreenshotCapture.captureScreenWithExclusion(

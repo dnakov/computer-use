@@ -53,8 +53,8 @@ public enum ResolvePrepareCapture {
 
         // 4. Compute optimal image size
         let (targetW, targetH) = ImageSizing.cuTargetImageSize(
-            physW: displayInfo.boundsWidth,
-            physH: displayInfo.boundsHeight
+            physW: displayInfo.physicalWidth,
+            physH: displayInfo.physicalHeight
         )
 
         // 5. Capture screenshot

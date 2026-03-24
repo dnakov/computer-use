@@ -257,14 +257,18 @@ public enum ActionDispatcher {
 
         // Determine display
         let displayId = session.selectedDisplayId ?? Int(CGMainDisplayID())
-        let displayBounds = CGDisplayBounds(CGDirectDisplayID(displayId))
-        let displayWidth = Int(displayBounds.width)
-        let displayHeight = Int(displayBounds.height)
+        guard let displayInfo = DisplayManager.cuDisplayInfo(forDisplayID: UInt32(displayId)) else {
+            throw DispatchError.executorThrew("CU display unavailable")
+        }
+        let displayWidth = displayInfo.boundsWidth   // points
+        let displayHeight = displayInfo.boundsHeight  // points
+        let physW = displayInfo.physicalWidth          // physical pixels (points * scale)
+        let physH = displayInfo.physicalHeight
 
-        // Compute capture dimensions
+        // Compute capture dimensions from physical pixels (matching JS spec)
         let (captureW, captureH) = ImageSizing.cuTargetImageSize(
-            physW: displayWidth,
-            physH: displayHeight
+            physW: physW,
+            physH: physH
         )
 
         // Capture
@@ -274,7 +278,7 @@ public enum ActionDispatcher {
                 width: captureW,
                 height: captureH,
                 excludedBundleIds: excludeList,
-                jpegQuality: 0.8
+                jpegQuality: 0.75
             )
 
             // Extract base64 from data URL
@@ -288,8 +292,8 @@ public enum ActionDispatcher {
                 displayWidth: displayWidth,
                 displayHeight: displayHeight,
                 displayId: displayId,
-                originX: Int(displayBounds.origin.x),
-                originY: Int(displayBounds.origin.y)
+                originX: displayInfo.originX,
+                originY: displayInfo.originY
             )
             session.lastScreenshot = dims
 
